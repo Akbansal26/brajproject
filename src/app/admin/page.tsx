@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
-  ShieldAlert,
   Building2,
   DoorOpen,
   CheckCircle2,
@@ -14,6 +13,7 @@ import {
   ExternalLink,
   Info,
   FileCheck,
+  Database as DatabaseIcon,
 } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -22,6 +22,13 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { TEMPLES_DATA, TempleDetail } from "@/data/temples";
 import { GATE_GUIDES, GateRecord, TempleGateGuide } from "@/data/gates";
+import {
+  getTemples,
+  getGateGuides,
+  getVerificationSources,
+  VerificationSourceItem,
+} from "@/services/templeDataService";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 type AdminTab = "temples" | "gates" | "verification" | "crowd";
 
@@ -34,6 +41,35 @@ export default function AdminDashboardPage() {
   // Local editable in-memory states (Development / Demo only)
   const [temples, setTemples] = useState<TempleDetail[]>(TEMPLES_DATA);
   const [gateGuides, setGateGuides] = useState<TempleGateGuide[]>(GATE_GUIDES);
+  const [verificationSources, setVerificationSources] = useState<VerificationSourceItem[]>([]);
+  const [isDbConfigured] = useState(() => isSupabaseConfigured());
+  const [dataSourceLabel, setDataSourceLabel] = useState("Local Memory / Fallback");
+
+  useEffect(() => {
+    let active = true;
+    getTemples().then((res) => {
+      if (active) {
+        setTemples(res.data);
+        setDataSourceLabel(res.sourceLabel);
+      }
+    });
+
+    getGateGuides().then((res) => {
+      if (active) {
+        setGateGuides(res.data);
+      }
+    });
+
+    getVerificationSources().then((res) => {
+      if (active) {
+        setVerificationSources(res.data);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Edit modal / drawer state
   const [editingTemple, setEditingTemple] = useState<TempleDetail | null>(null);
@@ -175,23 +211,25 @@ export default function AdminDashboardPage() {
         align="left"
       />
 
-      {/* MANDATORY DEVELOPMENT & ZERO-PERSISTENCE BANNER */}
-      <div className="rounded-2xl border-2 border-red-300 bg-red-50/80 p-5 sm:p-6 shadow-xs">
+      {/* SUPABASE INTEGRATION & PERSISTENCE NOTICE BANNER */}
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 shadow-xs ${isDbConfigured ? "border-amber-300 bg-amber-50/80" : "border-red-300 bg-red-50/80"}`}>
         <div className="flex items-start gap-4">
-          <div className="p-2.5 rounded-xl bg-red-100 text-red-700 shrink-0">
-            <ShieldAlert className="h-6 w-6" />
+          <div className={`p-2.5 rounded-xl shrink-0 ${isDbConfigured ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+            <DatabaseIcon className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-200 text-red-900">
-                Development-Only Interface • Zero Persistence Warning
+              <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${isDbConfigured ? "bg-amber-200 text-amber-900" : "bg-red-200 text-red-900"}`}>
+                Phase 2 Integration • {isDbConfigured ? "Supabase Client Detected" : "Supabase Not Configured"}
               </span>
-              <span className="text-xs font-medium text-red-800">
-                • Not Connected to Production Database
+              <span className="text-xs font-medium text-braj-indigo-950/70">
+                • Active Read Source: <strong className="text-braj-indigo-950">{dataSourceLabel}</strong>
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-red-950/80 leading-relaxed">
-              This dashboard is a <strong>development prototype</strong> intended to review and demonstrate administrative workflows for Phase 1. Authentication, Role-Based Access Control (RBAC), and Supabase PostgreSQL persistence are <strong>not connected yet</strong>. Any edits made in this console will only modify in-memory React state and will reset upon page reload.
+            <p className="text-xs sm:text-sm text-braj-indigo-950/80 leading-relaxed">
+              {isDbConfigured
+                ? "Supabase client credentials are configured. Live queries for temples, gates, verification sources, and observations are active. Direct writes in this console are managed in-memory unless signed in with an authorized administrative role under Supabase Row Level Security (RLS)."
+                : "Supabase environment variables are currently unconfigured. The application is operating on the offline verified catalog fallback. To connect live Supabase PostgreSQL, copy .env.example to .env.local and execute the migration script in supabase/migrations/."}
             </p>
           </div>
         </div>
@@ -550,6 +588,63 @@ export default function AdminDashboardPage() {
                   Exclusively designated for outbound crowd evacuation or VIP passes. Public entrance attempts strictly prohibited by police barriers.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Verification Sources Table */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-braj-indigo-950 flex items-center gap-2">
+              <DatabaseIcon className="w-4 h-4 text-braj-saffron-600" />
+              <span>Registered Verification Sources ({verificationSources.length})</span>
+            </h4>
+            <div className="overflow-x-auto rounded-2xl border border-braj-cream-300 bg-white shadow-2xs">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-braj-cream-300 bg-braj-cream-50/80">
+                    <th className="py-3 px-4 font-bold text-braj-indigo-950">Source Authority / Entity</th>
+                    <th className="py-3 px-4 font-bold text-braj-indigo-950">Source Type</th>
+                    <th className="py-3 px-4 font-bold text-braj-indigo-950">Reference / Contact</th>
+                    <th className="py-3 px-4 font-bold text-braj-indigo-950">Last Audit Date</th>
+                    <th className="py-3 px-4 font-bold text-braj-indigo-950">Audit Scope</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-braj-cream-200">
+                  {verificationSources.map((source) => (
+                    <tr key={source.id} className="hover:bg-braj-cream-50/40 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-braj-indigo-950">{source.name}</div>
+                        <div className="text-2xs font-mono text-braj-cream-700">ID: {source.id.slice(0, 8)}...</div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="capitalize text-xs font-semibold px-2 py-0.5 rounded bg-braj-cream-100 text-braj-indigo-950 border border-braj-cream-300">
+                          {source.sourceType.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-braj-indigo-950/80">
+                        {source.referenceUrl ? (
+                          <a
+                            href={source.referenceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-braj-saffron-700 hover:underline flex items-center gap-1"
+                          >
+                            <span>{source.contactInfo || "Reference Link"}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span>{source.contactInfo || "Internal Official Filing"}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs font-mono text-braj-indigo-950">
+                        {source.verificationDate}
+                      </td>
+                      <td className="py-3.5 px-4 text-2xs text-braj-cream-800">
+                        {source.notes || "Official verification of pedestrian rules and gate access."}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </section>

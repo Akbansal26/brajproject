@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -21,7 +21,9 @@ import {
   ShieldAlert,
   ArrowRight,
   Accessibility,
+  Database as DatabaseIcon,
 } from "lucide-react";
+import { getGateGuides } from "@/services/templeDataService";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
@@ -42,18 +44,40 @@ function GateFinderContent() {
   const searchParams = useSearchParams();
   const initialTempleSlug = searchParams.get("temple") || searchParams.get("id") || "";
 
+  const [guides, setGuides] = useState<TempleGateGuide[]>(() => GATE_GUIDES);
+  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string }>({
+    isLiveDatabase: false,
+    label: "Local Verified Gate Guides",
+  });
+
+  useEffect(() => {
+    let active = true;
+    getGateGuides().then((result) => {
+      if (active) {
+        setGuides(result.data);
+        setDataMeta({
+          isLiveDatabase: result.isLiveDatabase,
+          label: result.sourceLabel,
+        });
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Find initial guide from query param or fallback to first
   const defaultGuide = useMemo(() => {
     if (initialTempleSlug) {
-      const found = GATE_GUIDES.find(
+      const found = guides.find(
         (g) =>
           g.templeId.toLowerCase() === initialTempleSlug.toLowerCase() ||
           g.templeSlug.toLowerCase() === initialTempleSlug.toLowerCase()
       );
       if (found) return found;
     }
-    return GATE_GUIDES[0];
-  }, [initialTempleSlug]);
+    return guides[0] || GATE_GUIDES[0];
+  }, [initialTempleSlug, guides]);
 
   const [selectedTempleId, setSelectedTempleId] = useState<string>(defaultGuide.templeId);
   const [templeSearchQuery, setTempleSearchQuery] = useState("");
@@ -64,21 +88,21 @@ function GateFinderContent() {
 
   // Current active temple guide
   const currentGuide: TempleGateGuide = useMemo(() => {
-    return GATE_GUIDES.find((g) => g.templeId === selectedTempleId) || GATE_GUIDES[0];
-  }, [selectedTempleId]);
+    return guides.find((g) => g.templeId === selectedTempleId) || guides[0] || GATE_GUIDES[0];
+  }, [selectedTempleId, guides]);
 
   // Filter temples for selector
   const filteredTemplesList = useMemo(() => {
     const q = templeSearchQuery.trim().toLowerCase();
-    if (!q) return GATE_GUIDES;
-    return GATE_GUIDES.filter(
+    if (!q) return guides;
+    return guides.filter(
       (g) =>
         g.templeName.toLowerCase().includes(q) ||
         g.hindiName.includes(q) ||
         g.city.toLowerCase().includes(q) ||
         g.address.toLowerCase().includes(q)
     );
-  }, [templeSearchQuery]);
+  }, [templeSearchQuery, guides]);
 
   // Filter gates for current temple
   const filteredGates = useMemo(() => {
@@ -158,6 +182,23 @@ function GateFinderContent() {
         subtitle="Avoid dense one-way alley bottlenecks, identify verified public entrances vs dedicated exit portals, locate official shoe counters, and view GPS-verified gate positions across sacred Braj shrines."
         align="left"
       />
+
+      {/* Database Integration Status Strip */}
+      <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-braj-cream-100/70 border border-braj-cream-300 text-xs">
+        <div className="flex items-center gap-2">
+          <DatabaseIcon className={`w-4 h-4 ${dataMeta.isLiveDatabase ? "text-emerald-600" : "text-amber-600"}`} />
+          <span className="font-semibold text-braj-indigo-950">
+            Source: <span className="font-normal">{dataMeta.label}</span>
+          </span>
+        </div>
+        <StatusBadge
+          variant={dataMeta.isLiveDatabase ? "success" : "neutral"}
+          size="sm"
+          dot
+        >
+          {dataMeta.isLiveDatabase ? "Supabase Live Connected" : "Local Development Fallback"}
+        </StatusBadge>
+      </div>
 
       {/* Temple Search & Quick Selector */}
       <div className="bg-white p-6 rounded-3xl border border-braj-cream-300 shadow-2xs space-y-4">

@@ -21,9 +21,9 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import {
   getAllTemples,
-  getTempleBySlug,
   getRelatedTemples,
 } from "@/data/temples";
+import { getTempleBySlug as fetchTempleBySlug } from "@/services/templeDataService";
 
 interface TemplePageProps {
   params: Promise<{
@@ -40,7 +40,8 @@ export async function generateStaticParams() {
 
 export default async function TempleDetailPage({ params }: TemplePageProps) {
   const { slug } = await params;
-  const temple = getTempleBySlug(slug);
+  const result = await fetchTempleBySlug(slug);
+  const temple = result.data;
 
   if (!temple) {
     notFound();

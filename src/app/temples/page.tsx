@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -18,7 +18,9 @@ import {
   Landmark,
   CalendarCheck,
   ArrowUpDown,
+  Database as DatabaseIcon,
 } from "lucide-react";
+import { getTemples } from "@/services/templeDataService";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
@@ -187,13 +189,34 @@ function TemplesDirectoryContent() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortOrder, setSortOrder] = useState<"name-asc" | "name-desc" | "city">("name-asc");
 
-  const allTemples = useMemo(() => getAllTemples(), []);
+  const [temples, setTemples] = useState<TempleDetail[]>(() => getAllTemples());
+  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string }>({
+    isLiveDatabase: false,
+    label: "Local Verified Catalog",
+  });
+
+  useEffect(() => {
+    let active = true;
+    getTemples().then((result) => {
+      if (active) {
+        setTemples(result.data);
+        setDataMeta({
+          isLiveDatabase: result.isLiveDatabase,
+          label: result.sourceLabel,
+        });
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const cities = useMemo(() => getCities(), []);
   const categories = useMemo(() => getCategories(), []);
 
   // Filter & Sort Logic
   const filteredTemples = useMemo(() => {
-    let result = allTemples.filter((temple) => {
+    let result = temples.filter((temple) => {
       // City filter
       const matchesCity =
         selectedCity === "all" || temple.citySlug === selectedCity.toLowerCase();
@@ -235,7 +258,7 @@ function TemplesDirectoryContent() {
     });
 
     return result;
-  }, [allTemples, searchQuery, selectedCity, selectedCategory, sortOrder]);
+  }, [temples, searchQuery, selectedCity, selectedCategory, sortOrder]);
 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
@@ -267,6 +290,23 @@ function TemplesDirectoryContent() {
         subtitle="Searchable directory of verified mandirs, parikrama hills, holy kunds, and ghats across Mathura, Vrindavan, Govardhan, Barsana, Nandgaon, and Gokul with verified darshan schedules and gate logistics."
         align="left"
       />
+
+      {/* Database Integration Status Strip */}
+      <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-braj-cream-100/70 border border-braj-cream-300 text-xs">
+        <div className="flex items-center gap-2">
+          <DatabaseIcon className={`w-4 h-4 ${dataMeta.isLiveDatabase ? "text-emerald-600" : "text-amber-600"}`} />
+          <span className="font-semibold text-braj-indigo-950">
+            Source: <span className="font-normal">{dataMeta.label}</span>
+          </span>
+        </div>
+        <StatusBadge
+          variant={dataMeta.isLiveDatabase ? "success" : "neutral"}
+          size="sm"
+          dot
+        >
+          {dataMeta.isLiveDatabase ? "Supabase Live Connected" : "Local Development Fallback"}
+        </StatusBadge>
+      </div>
 
       {/* Filter and Search Controls */}
       <div className="space-y-5 bg-white p-6 rounded-3xl border border-braj-cream-300 shadow-2xs">
@@ -322,8 +362,8 @@ function TemplesDirectoryContent() {
               const isSelected = selectedCity === city.slug;
               const count =
                 city.slug === "all"
-                  ? allTemples.length
-                  : allTemples.filter((t) => t.citySlug === city.slug).length;
+                  ? temples.length
+                  : temples.filter((t: TempleDetail) => t.citySlug === city.slug).length;
 
               return (
                 <button
@@ -390,7 +430,7 @@ function TemplesDirectoryContent() {
           <strong className="text-braj-indigo-950 font-bold">
             {filteredTemples.length}
           </strong>{" "}
-          of {allTemples.length} sacred destinations across Braj
+          of {temples.length} sacred destinations across Braj
         </div>
 
         <div className="flex items-center gap-2">
