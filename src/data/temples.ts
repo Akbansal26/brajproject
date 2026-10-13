@@ -265,7 +265,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "The 21-kilometer circumambulation (Giriraj Parikrama) around the hill is the supreme devotional act in Braj. Encompasses sacred spots including Mansi Ganga, Daan Ghati, Jatipura Mukharvind, Puchhari Ka Lautha, and Radha Kund.",
     address: "Govardhan Parikrama Marg, Govardhan, Mathura District, Uttar Pradesh 281502",
-    imageUrl: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/temples/govardhan-hill.jpg",
     coordinates: {
       lat: 27.4988,
       lng: 77.4646,
@@ -316,7 +316,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "The divine appearance palace of Srimati Radharani, the daughter of King Vrishabhanu and Kirti Ida. World-renowned as the epicenter of Lathmar Holi where Gopis playfully strike the shields of Nandgaon cowherd boys.",
     address: "Bhanugarh Hill, Barsana, Mathura District, Uttar Pradesh 281405",
-    imageUrl: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/destinations/barsana.jpg",
     coordinates: {
       lat: 27.6481,
       lng: 77.3752,
@@ -366,7 +366,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "Houses deities of Nand Baba, Yashoda Ma, Bal Gopal Krishna, Balarama, and Radharani. Here Lord Krishna spent His boyhood pastimes as a shepherd boy alongside the cowherd community.",
     address: "Nandishwar Hill, Nandgaon, Mathura District, Uttar Pradesh 281403",
-    imageUrl: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/destinations/nandgaon.jpg",
     coordinates: {
       lat: 27.7126,
       lng: 77.3932,
@@ -416,7 +416,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "Devotees from around the world take off their shoes and roll in the holy sand (Reti) to seek the dust of the Lord's lotus feet. The ashram grounds house a deer park, peacock sanctuary, and ancient banyan trees.",
     address: "Raman Reti Road, Gokul, Mathura District, Uttar Pradesh 281303",
-    imageUrl: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/destinations/gokul.jpg",
     coordinates: {
       lat: 27.4419,
       lng: 77.7214,
@@ -466,7 +466,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "Celebrated for Rajasthani architecture, intricate frescoes, and grand Jhulan Utsav (Swing Festival) during the monsoon month of Shravana.",
     address: "Near Vishram Ghat, Raja Dhiraj Bazar, Mathura, Uttar Pradesh 281001",
-    imageUrl: "https://images.unsplash.com/photo-1590076215667-875d4ef2d7ee?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/temples/dwarkadhish-mathura.jpg",
     coordinates: {
       lat: 27.5028,
       lng: 77.6837,
@@ -516,7 +516,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "The deity manifested self-carved from a Shaligram stone. Radharani is present as a crown placed beside Thakur Ji. Known for the purest Goswami seva tradition and profound intimacy.",
     address: "Radha Raman Gali, Vrindavan, Uttar Pradesh 281121",
-    imageUrl: "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/temples/radha-raman.jpg",
     coordinates: {
       lat: 27.5861,
       lng: 77.7022,
@@ -566,7 +566,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "Pilgrims begin their Giriraj parikrama by offering continuous milk abhishek onto the natural rocks of the sacred hill here.",
     address: "Main Parikrama Marg, Govardhan, Uttar Pradesh 281502",
-    imageUrl: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/temples/daan-ghati.jpg",
     coordinates: {
       lat: 27.4981,
       lng: 77.4655,
@@ -616,7 +616,7 @@ export const TEMPLES_DATA: TempleDetail[] = [
     culturalSignificance:
       "A serene stone ghat overlooking the peaceful Yamuna. Devotees take the sacred mud of Brahmand Ghat to apply as holy tilak on their foreheads.",
     address: "Brahmand Ghat Road, Gokul, Uttar Pradesh 281303",
-    imageUrl: "https://images.unsplash.com/photo-1590076215667-875d4ef2d7ee?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "/images/temples/brahmand-ghat.jpg",
     coordinates: {
       lat: 27.4382,
       lng: 77.7289,
