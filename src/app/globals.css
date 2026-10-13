@@ -1,26 +1,99 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-braj-indigo-950: #0a0d21;
+  --color-braj-indigo-900: #121633;
+  --color-braj-indigo-800: #1c224e;
+  --color-braj-indigo-700: #262e6b;
+  --color-braj-indigo-600: #394498;
+  --color-braj-indigo-500: #4f5ec4;
+  --color-braj-indigo-400: #717edc;
+  --color-braj-indigo-300: #9da7ec;
+  --color-braj-indigo-200: #c9d0f6;
+  --color-braj-indigo-100: #e5e8fb;
+  --color-braj-indigo-50: #f2f4fd;
+
+  --color-braj-saffron-900: #7c2207;
+  --color-braj-saffron-800: #932d0b;
+  --color-braj-saffron-700: #b83907;
+  --color-braj-saffron-600: #e25211;
+  --color-braj-saffron-500: #f56b23;
+  --color-braj-saffron-400: #fa8e58;
+  --color-braj-saffron-300: #fdb38d;
+  --color-braj-saffron-200: #fed2ba;
+  --color-braj-saffron-100: #feeddf;
+  --color-braj-saffron-50: #fff8f0;
+
+  --color-braj-gold-900: #584411;
+  --color-braj-gold-800: #6f5616;
+  --color-braj-gold-700: #85681d;
+  --color-braj-gold-600: #aa8a25;
+  --color-braj-gold-500: #c8a838;
+  --color-braj-gold-400: #d6bd63;
+  --color-braj-gold-300: #e4d290;
+  --color-braj-gold-200: #efe4ba;
+  --color-braj-gold-100: #f7f2de;
+  --color-braj-gold-50: #fbf9f1;
+
+  --color-braj-cream-900: #26231c;
+  --color-braj-cream-800: #474136;
+  --color-braj-cream-700: #696253;
+  --color-braj-cream-600: #8c8371;
+  --color-braj-cream-500: #b0a793;
+  --color-braj-cream-400: #d3c6aa;
+  --color-braj-cream-300: #e6deca;
+  --color-braj-cream-200: #f3eedf;
+  --color-braj-cream-100: #faf7f0;
+  --color-braj-cream-50: #fdfcf9;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #faf7f0;
+  --foreground: #1c224e;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: #feeddf;
+  color: #b83907;
+}
+
+/* Subtle jaali lattice background for spiritual accents */
+.bg-jaali-pattern {
+  background-image: radial-gradient(rgba(200, 168, 56, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-mandala-radial {
+  background: radial-gradient(circle at 50% 0%, rgba(226, 82, 17, 0.12) 0%, rgba(18, 22, 51, 0) 70%);
+}
+
+/* Shimmer animation for loading skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(243, 238, 223, 0.6) 0%,
+    rgba(253, 252, 249, 0.9) 50%,
+    rgba(243, 238, 223, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
 }
