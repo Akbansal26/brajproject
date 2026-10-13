@@ -230,12 +230,14 @@ ALTER TABLE public.gate_crowd_observations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- 1. temples: Public read access for all visitors
+DROP POLICY IF EXISTS "Public read access for temples" ON public.temples;
 CREATE POLICY "Public read access for temples"
     ON public.temples
     FOR SELECT
     USING (true);
 
 -- Temples modification: Only admins / service role
+DROP POLICY IF EXISTS "Admin write access for temples" ON public.temples;
 CREATE POLICY "Admin write access for temples"
     ON public.temples
     FOR ALL
@@ -256,12 +258,14 @@ CREATE POLICY "Admin write access for temples"
     );
 
 -- 2. temple_gates: Public read access
+DROP POLICY IF EXISTS "Public read access for temple gates" ON public.temple_gates;
 CREATE POLICY "Public read access for temple gates"
     ON public.temple_gates
     FOR SELECT
     USING (true);
 
 -- Gates modification: Only field surveyors / admins / service role
+DROP POLICY IF EXISTS "Authorized write access for temple gates" ON public.temple_gates;
 CREATE POLICY "Authorized write access for temple gates"
     ON public.temple_gates
     FOR ALL
@@ -282,11 +286,13 @@ CREATE POLICY "Authorized write access for temple gates"
     );
 
 -- 3. verification_sources: Public read access
+DROP POLICY IF EXISTS "Public read access for verification sources" ON public.verification_sources;
 CREATE POLICY "Public read access for verification sources"
     ON public.verification_sources
     FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "Admin write access for verification sources" ON public.verification_sources;
 CREATE POLICY "Admin write access for verification sources"
     ON public.verification_sources
     FOR ALL
@@ -307,12 +313,14 @@ CREATE POLICY "Admin write access for verification sources"
     );
 
 -- 4. gate_crowd_observations: Public read access
+DROP POLICY IF EXISTS "Public read access for crowd observations" ON public.gate_crowd_observations;
 CREATE POLICY "Public read access for crowd observations"
     ON public.gate_crowd_observations
     FOR SELECT
     USING (true);
 
 -- Anyone authenticated can submit an observation; service role / field staff can verify
+DROP POLICY IF EXISTS "Authenticated users can submit observations" ON public.gate_crowd_observations;
 CREATE POLICY "Authenticated users can submit observations"
     ON public.gate_crowd_observations
     FOR INSERT
@@ -320,6 +328,7 @@ CREATE POLICY "Authenticated users can submit observations"
     WITH CHECK (true);
 
 -- 5. user_profiles: Users can read their own profile, admins can read all
+DROP POLICY IF EXISTS "Users can read own profile" ON public.user_profiles;
 CREATE POLICY "Users can read own profile"
     ON public.user_profiles
     FOR SELECT
