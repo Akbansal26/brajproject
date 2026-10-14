@@ -289,6 +289,11 @@ export async function getGateGuides(): Promise<DataFetchResult<TempleGateGuide[]
       .from("temple_gates")
       .select("*");
 
+    const { data: crowdObs } = await client
+      .from("gate_crowd_observations")
+      .select("*")
+      .order("observation_timestamp", { ascending: false });
+
     if (templeErr || gateErr || !temples || temples.length === 0) {
       return {
         data: getStaticAllGateGuides(),
@@ -302,7 +307,10 @@ export async function getGateGuides(): Promise<DataFetchResult<TempleGateGuide[]
     const guides: TempleGateGuide[] = temples.map((t) => {
       const relatedGates = (gates || [])
         .filter((g) => g.temple_id === t.id)
-        .map((g) => mapDbGateToGateRecord(g));
+        .map((g) => {
+          const latestObs = crowdObs?.find((obs) => obs.gate_id === g.id);
+          return mapDbGateToGateRecord(g, latestObs);
+        });
 
       // Match static fallback metadata for parking and footwear if DB does not have it yet
       const staticGuide = getStaticGateGuide(t.slug) || getStaticGateGuide(t.id);
@@ -456,25 +464,11 @@ export async function getVerificationSources(): Promise<
 export async function getCrowdObservations(
   gateId?: string
 ): Promise<DataFetchResult<GateCrowdObservationItem[]>> {
-  const staticObservations: GateCrowdObservationItem[] = [
-    {
-      id: "obs-demo-1",
-      gateId: gateId || "bb-gate-2-3",
-      templeId: "banke-bihari",
-      observationTimestamp: new Date().toISOString(),
-      crowdLevel: "heavy",
-      estimatedWaitMinutes: 45,
-      reporterType: "police_dispatch",
-      notes: "Peak crowd surge arriving for Sandhya Shayan Aarti. Pedestrian queues actively managed.",
-      isVerified: true,
-    },
-  ];
-
   if (!isSupabaseConfigured()) {
     return {
-      data: staticObservations,
+      data: [],
       isLiveDatabase: false,
-      sourceLabel: "Demo Observation Sample (Supabase Unconfigured)",
+      sourceLabel: "No Live Observations (Supabase Unconfigured)",
     };
   }
 
@@ -482,9 +476,9 @@ export async function getCrowdObservations(
     const client = getSupabaseBrowserClient();
     if (!client) {
       return {
-        data: staticObservations,
+        data: [],
         isLiveDatabase: false,
-        sourceLabel: "Demo Observation Sample",
+        sourceLabel: "Client Initializing",
       };
     }
 
@@ -500,12 +494,20 @@ export async function getCrowdObservations(
 
     const { data, error } = await query;
 
-    if (error || !data || data.length === 0) {
+    if (error) {
       return {
-        data: staticObservations,
+        data: [],
         isLiveDatabase: false,
-        sourceLabel: "Demo Observation Sample (Query Fallback)",
-        error: error?.message,
+        sourceLabel: "Observations Query Fallback",
+        error: error.message,
+      };
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        data: [],
+        isLiveDatabase: true,
+        sourceLabel: "Live Supabase Database (No Observations Recorded)",
       };
     }
 
@@ -527,9 +529,9 @@ export async function getCrowdObservations(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
-      data: staticObservations,
+      data: [],
       isLiveDatabase: false,
-      sourceLabel: "Demo Observation Sample (Error Fallback)",
+      sourceLabel: "Connection Error",
       error: msg,
     };
   }

@@ -45,22 +45,30 @@ function GateFinderContent() {
   const initialTempleSlug = searchParams.get("temple") || searchParams.get("id") || "";
 
   const [guides, setGuides] = useState<TempleGateGuide[]>(() => GATE_GUIDES);
-  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string }>({
+  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string; error?: string }>({
     isLiveDatabase: false,
     label: "Local Verified Gate Guides",
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    getGateGuides().then((result) => {
-      if (active) {
-        setGuides(result.data);
-        setDataMeta({
-          isLiveDatabase: result.isLiveDatabase,
-          label: result.sourceLabel,
-        });
-      }
-    });
+    getGateGuides()
+      .then((result) => {
+        if (active) {
+          setGuides(result.data);
+          setDataMeta({
+            isLiveDatabase: result.isLiveDatabase,
+            label: result.sourceLabel,
+            error: result.error,
+          });
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
     return () => {
       active = false;
     };
@@ -185,18 +193,32 @@ function GateFinderContent() {
 
       {/* Database Integration Status Strip */}
       <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-braj-cream-100/70 border border-braj-cream-300 text-xs">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <DatabaseIcon className={`w-4 h-4 ${dataMeta.isLiveDatabase ? "text-emerald-600" : "text-amber-600"}`} />
           <span className="font-semibold text-braj-indigo-950">
             Source: <span className="font-normal">{dataMeta.label}</span>
           </span>
+          {isLoading && (
+            <span className="text-[11px] text-braj-gold-700 bg-braj-gold-100/70 px-2 py-0.5 rounded-md animate-pulse">
+              Syncing...
+            </span>
+          )}
+          {dataMeta.error && (
+            <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              Notice: {dataMeta.error}
+            </span>
+          )}
         </div>
         <StatusBadge
           variant={dataMeta.isLiveDatabase ? "success" : "neutral"}
           size="sm"
           dot
         >
-          {dataMeta.isLiveDatabase ? "Supabase Live Connected" : "Local Development Fallback"}
+          {isLoading
+            ? "Checking Database..."
+            : dataMeta.isLiveDatabase
+            ? "Supabase Live Connected"
+            : "Local Development Fallback"}
         </StatusBadge>
       </div>
 
@@ -607,14 +629,31 @@ function GateFinderContent() {
                       )}
                     </div>
 
-                    {/* Live Crowd Unavailable State */}
-                    <div className="p-2.5 rounded-lg bg-braj-cream-100/60 border border-braj-cream-200 text-[11px] text-braj-cream-700 flex items-center justify-between flex-wrap gap-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-braj-gold-600" />
-                        <span>Live crowd telemetry: <em>Unavailable</em></span>
-                      </span>
-                      <span>Verified: {gate.lastVerified}</span>
-                    </div>
+                    {/* Real-time Crowd Observation Display */}
+                    {gate.crowdObservation?.available ? (
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950 flex items-center justify-between flex-wrap gap-1">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>
+                            Crowd: <strong className="uppercase">{gate.crowdObservation.level}</strong>
+                            {gate.crowdObservation.estimatedWaitMinutes !== undefined && (
+                              <span> • Wait: ~{gate.crowdObservation.estimatedWaitMinutes} min</span>
+                            )}
+                          </span>
+                        </span>
+                        <span className="text-emerald-800 text-[10px]">
+                          {gate.crowdObservation.note || `Verified: ${gate.lastVerified}`}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-lg bg-braj-cream-100/60 border border-braj-cream-200 text-[11px] text-braj-cream-700 flex items-center justify-between flex-wrap gap-1">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-braj-gold-600" />
+                          <span>Live crowd: <em>{gate.crowdObservation?.note || "No real-time report"}</em></span>
+                        </span>
+                        <span>Verified: {gate.lastVerified}</span>
+                      </div>
+                    )}
 
                     {/* Card Actions Footer */}
                     <div className="pt-3 border-t border-braj-cream-200 flex items-center justify-between flex-wrap gap-2">
@@ -837,6 +876,35 @@ function GateFinderContent() {
               {inspectedGate.warnings && (
                 <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs">
                   <strong>Warning:</strong> {inspectedGate.warnings}
+                </div>
+              )}
+
+              {/* Real-Time Crowd Telemetry */}
+              {inspectedGate.crowdObservation?.available ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs space-y-1.5 text-emerald-950">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                    <span>Real-Time Crowd Observation (Verified)</span>
+                  </div>
+                  <div>
+                    Crowd Level: <strong className="uppercase">{inspectedGate.crowdObservation.level}</strong>
+                    {inspectedGate.crowdObservation.estimatedWaitMinutes !== undefined && (
+                      <span> • Estimated Wait: ~{inspectedGate.crowdObservation.estimatedWaitMinutes} mins</span>
+                    )}
+                  </div>
+                  {inspectedGate.crowdObservation.note && (
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">{inspectedGate.crowdObservation.note}</p>
+                  )}
+                  {inspectedGate.crowdObservation.observationTime && (
+                    <div className="text-[10px] text-emerald-700 pt-1 border-t border-emerald-200/60">
+                      Reported: {new Date(inspectedGate.crowdObservation.observationTime).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-braj-cream-50 border border-braj-cream-200 text-xs text-braj-cream-700 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-braj-cream-500" />
+                  <span>Real-Time Telemetry: <em>{inspectedGate.crowdObservation?.note || "No live observation reported."}</em></span>
                 </div>
               )}
 

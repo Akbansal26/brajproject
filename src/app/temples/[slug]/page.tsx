@@ -14,6 +14,7 @@ import {
   Moon,
   Car,
   Footprints,
+  Database as DatabaseIcon,
 } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
@@ -59,6 +60,28 @@ export default async function TempleDetailPage({ params }: TemplePageProps) {
           { label: temple.name },
         ]}
       />
+
+      {/* Database Integration Status Strip */}
+      <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-braj-cream-100/70 border border-braj-cream-300 text-xs">
+        <div className="flex items-center gap-2">
+          <DatabaseIcon className={`w-4 h-4 ${result.isLiveDatabase ? "text-emerald-600" : "text-amber-600"}`} />
+          <span className="font-semibold text-braj-indigo-950">
+            Source: <span className="font-normal">{result.sourceLabel}</span>
+          </span>
+          {result.error && (
+            <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              Notice: {result.error}
+            </span>
+          )}
+        </div>
+        <StatusBadge
+          variant={result.isLiveDatabase ? "success" : "neutral"}
+          size="sm"
+          dot
+        >
+          {result.isLiveDatabase ? "Supabase Live Connected" : "Local Development Fallback"}
+        </StatusBadge>
+      </div>
 
       {/* Main Shrine Profile Hero Banner */}
       <div className="rounded-3xl border border-braj-cream-300 bg-white shadow-xs overflow-hidden">

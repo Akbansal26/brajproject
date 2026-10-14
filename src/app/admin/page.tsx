@@ -672,34 +672,44 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-braj-cream-200">
-                {crowdObservations.map((item) => (
-                  <tr key={item.gate.id} className="hover:bg-braj-cream-50/40 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-braj-indigo-950">
-                        {item.gate.gateNumber}: {item.gate.gateName}
-                      </div>
-                      <div className="text-2xs text-braj-indigo-950/60 font-medium">
-                        {item.templeName} ({item.city})
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="capitalize text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900">
-                        {item.gate.crowdObservation?.level || "Unknown"}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-braj-indigo-950">
-                      {item.gate.crowdObservation?.estimatedWaitMinutes
-                        ? `${item.gate.crowdObservation.estimatedWaitMinutes} mins`
-                        : "N/A"}
-                    </td>
-                    <td className="py-3.5 px-4 text-xs text-braj-indigo-950/70">
-                      {item.gate.crowdObservation?.observationTime || "Historical Baseline"}
-                    </td>
-                    <td className="py-3.5 px-4 text-2xs text-braj-indigo-950/80">
-                      {item.gate.crowdObservation?.note || "Routine observation report."}
+                {crowdObservations.length > 0 ? (
+                  crowdObservations.map((item) => (
+                    <tr key={item.gate.id} className="hover:bg-braj-cream-50/40 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-braj-indigo-950">
+                          {item.gate.gateNumber}: {item.gate.gateName}
+                        </div>
+                        <div className="text-2xs text-braj-indigo-950/60 font-medium">
+                          {item.templeName} ({item.city})
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="capitalize text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900">
+                          {item.gate.crowdObservation?.level || "Unknown"}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-braj-indigo-950">
+                        {item.gate.crowdObservation?.estimatedWaitMinutes
+                          ? `${item.gate.crowdObservation.estimatedWaitMinutes} mins`
+                          : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-braj-indigo-950/70">
+                        {item.gate.crowdObservation?.observationTime
+                          ? new Date(item.gate.crowdObservation.observationTime).toLocaleString()
+                          : "Historical Baseline"}
+                      </td>
+                      <td className="py-3.5 px-4 text-2xs text-braj-indigo-950/80">
+                        {item.gate.crowdObservation?.note || "Routine observation report."}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-xs text-braj-cream-700">
+                      No real-time crowd observations recorded in database yet.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

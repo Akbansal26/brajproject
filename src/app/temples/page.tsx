@@ -190,22 +190,30 @@ function TemplesDirectoryContent() {
   const [sortOrder, setSortOrder] = useState<"name-asc" | "name-desc" | "city">("name-asc");
 
   const [temples, setTemples] = useState<TempleDetail[]>(() => getAllTemples());
-  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string }>({
+  const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string; error?: string }>({
     isLiveDatabase: false,
     label: "Local Verified Catalog",
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    getTemples().then((result) => {
-      if (active) {
-        setTemples(result.data);
-        setDataMeta({
-          isLiveDatabase: result.isLiveDatabase,
-          label: result.sourceLabel,
-        });
-      }
-    });
+    getTemples()
+      .then((result) => {
+        if (active) {
+          setTemples(result.data);
+          setDataMeta({
+            isLiveDatabase: result.isLiveDatabase,
+            label: result.sourceLabel,
+            error: result.error,
+          });
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
     return () => {
       active = false;
     };
@@ -293,18 +301,32 @@ function TemplesDirectoryContent() {
 
       {/* Database Integration Status Strip */}
       <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-braj-cream-100/70 border border-braj-cream-300 text-xs">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <DatabaseIcon className={`w-4 h-4 ${dataMeta.isLiveDatabase ? "text-emerald-600" : "text-amber-600"}`} />
           <span className="font-semibold text-braj-indigo-950">
             Source: <span className="font-normal">{dataMeta.label}</span>
           </span>
+          {isLoading && (
+            <span className="text-[11px] text-braj-gold-700 bg-braj-gold-100/70 px-2 py-0.5 rounded-md animate-pulse">
+              Syncing...
+            </span>
+          )}
+          {dataMeta.error && (
+            <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              Notice: {dataMeta.error}
+            </span>
+          )}
         </div>
         <StatusBadge
           variant={dataMeta.isLiveDatabase ? "success" : "neutral"}
           size="sm"
           dot
         >
-          {dataMeta.isLiveDatabase ? "Supabase Live Connected" : "Local Development Fallback"}
+          {isLoading
+            ? "Checking Database..."
+            : dataMeta.isLiveDatabase
+            ? "Supabase Live Connected"
+            : "Local Development Fallback"}
         </StatusBadge>
       </div>
 
