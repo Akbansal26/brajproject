@@ -382,6 +382,63 @@ export async function getGateGuides(): Promise<DataFetchResult<TempleGateGuide[]
 }
 
 /**
+ * Retrieve verified gates and crowd telemetry for a specific temple.
+ */
+export async function getGatesForTemple(
+  templeSlugOrId: string
+): Promise<DataFetchResult<GateRecord[]>> {
+  const templeRes = await getTempleBySlug(templeSlugOrId);
+  const temple = templeRes.data;
+  if (!temple) {
+    return {
+      data: [],
+      isLiveDatabase: false,
+      sourceLabel: "Temple Not Found",
+    };
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const client = getSupabaseBrowserClient();
+      if (client) {
+        const { data: dbGates, error: gatesErr } = await client
+          .from("temple_gates")
+          .select("*")
+          .eq("temple_id", temple.id);
+
+        if (!gatesErr && dbGates && dbGates.length > 0) {
+          const { data: crowdObs } = await client
+            .from("gate_crowd_observations")
+            .select("*")
+            .eq("temple_id", temple.id)
+            .order("observation_timestamp", { ascending: false });
+
+          const mapped = dbGates.map((g) => {
+            const latestObs = crowdObs?.find((obs) => obs.gate_id === g.id);
+            return mapDbGateToGateRecord(g, latestObs);
+          });
+
+          return {
+            data: mapped,
+            isLiveDatabase: true,
+            sourceLabel: "Live Supabase Database",
+          };
+        }
+      }
+    } catch {
+      // Fall through to static guide
+    }
+  }
+
+  const staticGuide = getStaticGateGuide(temple.slug) || getStaticGateGuide(temple.id);
+  return {
+    data: staticGuide?.gates || [],
+    isLiveDatabase: false,
+    sourceLabel: templeRes.sourceLabel,
+  };
+}
+
+/**
  * Retrieve verification sources with fallback.
  */
 export async function getVerificationSources(): Promise<

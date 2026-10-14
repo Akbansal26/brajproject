@@ -43,6 +43,7 @@ import {
 function GateFinderContent() {
   const searchParams = useSearchParams();
   const initialTempleSlug = searchParams.get("temple") || searchParams.get("id") || "";
+  const initialGateId = searchParams.get("gate") || "";
 
   const [guides, setGuides] = useState<TempleGateGuide[]>(() => GATE_GUIDES);
   const [dataMeta, setDataMeta] = useState<{ isLiveDatabase: boolean; label: string; error?: string }>({
@@ -84,15 +85,28 @@ function GateFinderContent() {
       );
       if (found) return found;
     }
+    if (initialGateId) {
+      const foundByGate = guides.find((g) =>
+        g.gates.some((gate) => gate.id.toLowerCase() === initialGateId.toLowerCase())
+      );
+      if (foundByGate) return foundByGate;
+    }
     return guides[0] || GATE_GUIDES[0];
-  }, [initialTempleSlug, guides]);
+  }, [initialTempleSlug, initialGateId, guides]);
 
-  const [selectedTempleId, setSelectedTempleId] = useState<string>(defaultGuide.templeId);
+  const [userSelectedTempleId, setUserSelectedTempleId] = useState<string | null>(null);
   const [templeSearchQuery, setTempleSearchQuery] = useState("");
   const [gateTypeFilter, setGateTypeFilter] = useState<"all" | "entry" | "exit" | "restricted">("all");
+  const [accessibilityFilter, setAccessibilityFilter] = useState<"all" | "wheelchair" | "step_free">("all");
   const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "pending">("all");
-  const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
+  const [userSelectedGateId, setUserSelectedGateId] = useState<string | null>(null);
   const [inspectedGate, setInspectedGate] = useState<GateRecord | null>(null);
+
+  const selectedTempleId = userSelectedTempleId ?? defaultGuide.templeId;
+  const setSelectedTempleId = (id: string) => setUserSelectedTempleId(id);
+
+  const selectedGateId = userSelectedGateId ?? initialGateId ?? null;
+  const setSelectedGateId = (id: string | null) => setUserSelectedGateId(id);
 
   // Current active temple guide
   const currentGuide: TempleGateGuide = useMemo(() => {
@@ -125,6 +139,14 @@ function GateFinderContent() {
         matchesType = gate.gateType === "restricted" || gate.gateType === "emergency_exit";
       }
 
+      // Accessibility filter
+      let matchesAccessibility = true;
+      if (accessibilityFilter === "wheelchair") {
+        matchesAccessibility = gate.accessibility.wheelchairRamp === true;
+      } else if (accessibilityFilter === "step_free") {
+        matchesAccessibility = gate.accessibility.stepFree === true;
+      }
+
       // Verification filter
       let matchesVerification = true;
       if (verificationFilter === "verified") {
@@ -133,9 +155,9 @@ function GateFinderContent() {
         matchesVerification = gate.verificationStatus === "pending_verification";
       }
 
-      return matchesType && matchesVerification;
+      return matchesType && matchesAccessibility && matchesVerification;
     });
-  }, [currentGuide, gateTypeFilter, verificationFilter]);
+  }, [currentGuide, gateTypeFilter, accessibilityFilter, verificationFilter]);
 
   // Active gate for map highlight
   const activeGate = useMemo(() => {
@@ -466,19 +488,38 @@ function GateFinderContent() {
           </button>
         </div>
 
-        {/* Verification Status Filter */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-braj-cream-700">Verification:</span>
-          <select
-            value={verificationFilter}
-            onChange={(e) => setVerificationFilter(e.target.value as "all" | "verified" | "pending")}
-            aria-label="Filter gates by verification status"
-            className="text-xs bg-braj-cream-50 border border-braj-cream-300 rounded-xl px-2.5 py-1.5 text-braj-indigo-950 font-medium focus:outline-none focus:border-braj-saffron-500 cursor-pointer"
-          >
-            <option value="all">All Records</option>
-            <option value="verified">Verified Only</option>
-            <option value="pending">Pending Verification</option>
-          </select>
+        {/* Accessibility & Verification Filters */}
+        <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Accessibility className="w-3.5 h-3.5 text-braj-gold-600 shrink-0" />
+            <span className="text-xs text-braj-cream-700">Access:</span>
+            <select
+              value={accessibilityFilter}
+              onChange={(e) =>
+                setAccessibilityFilter(e.target.value as "all" | "wheelchair" | "step_free")
+              }
+              aria-label="Filter gates by accessibility"
+              className="text-xs bg-braj-cream-50 border border-braj-cream-300 rounded-xl px-2.5 py-1.5 text-braj-indigo-950 font-medium focus:outline-none focus:border-braj-saffron-500 cursor-pointer"
+            >
+              <option value="all">All Access</option>
+              <option value="wheelchair">Wheelchair Ramp</option>
+              <option value="step_free">Step-Free Entry</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-braj-cream-700">Audit:</span>
+            <select
+              value={verificationFilter}
+              onChange={(e) => setVerificationFilter(e.target.value as "all" | "verified" | "pending")}
+              aria-label="Filter gates by verification status"
+              className="text-xs bg-braj-cream-50 border border-braj-cream-300 rounded-xl px-2.5 py-1.5 text-braj-indigo-950 font-medium focus:outline-none focus:border-braj-saffron-500 cursor-pointer"
+            >
+              <option value="all">All Records</option>
+              <option value="verified">Verified Only</option>
+              <option value="pending">Pending Verification</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -712,6 +753,7 @@ function GateFinderContent() {
                   size="sm"
                   onClick={() => {
                     setGateTypeFilter("all");
+                    setAccessibilityFilter("all");
                     setVerificationFilter("all");
                   }}
                 >

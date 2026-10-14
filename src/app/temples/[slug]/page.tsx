@@ -14,6 +14,7 @@ import {
   Moon,
   Car,
   Footprints,
+  Compass,
   Database as DatabaseIcon,
 } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -24,7 +25,10 @@ import {
   getAllTemples,
   getRelatedTemples,
 } from "@/data/temples";
-import { getTempleBySlug as fetchTempleBySlug } from "@/services/templeDataService";
+import {
+  getTempleBySlug as fetchTempleBySlug,
+  getGatesForTemple,
+} from "@/services/templeDataService";
 
 interface TemplePageProps {
   params: Promise<{
@@ -53,6 +57,9 @@ export default async function TempleDetailPage({ params }: TemplePageProps) {
   if (!temple) {
     notFound();
   }
+
+  const gatesResult = await getGatesForTemple(temple.slug);
+  const gates = gatesResult.data;
 
   const relatedTemples = getRelatedTemples(temple.slug, temple.city, 3);
 
@@ -294,24 +301,40 @@ export default async function TempleDetailPage({ params }: TemplePageProps) {
             </div>
           </div>
 
-          {/* Gate Navigation & Access Details */}
-          <div className="space-y-4 pt-6 border-t border-braj-cream-200">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-xl font-bold text-braj-indigo-950 flex items-center gap-2">
-                <DoorOpen className="w-5 h-5 text-braj-saffron-600" />
-                <span>Gate Navigation & Arrival Logistics</span>
-              </h2>
-              <StatusBadge
-                variant={temple.gateDetails.status === "verified" ? "success" : "warning"}
-                dot
-              >
-                {temple.gateDetails.status === "verified"
-                  ? "Gate Routing Verified"
-                  : "Gates Pending Verification"}
-              </StatusBadge>
+          {/* Verified Gate Access & Logistics */}
+          <div className="space-y-6 pt-6 border-t border-braj-cream-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-braj-indigo-950 flex items-center gap-2">
+                    <DoorOpen className="w-5 h-5 text-braj-saffron-600" />
+                    <span>Verified Gate Access & Logistics</span>
+                  </h2>
+                  <StatusBadge
+                    variant={temple.gateDetails.status === "verified" ? "success" : "warning"}
+                    dot
+                  >
+                    {temple.gateDetails.status === "verified"
+                      ? "Gate Routing Verified"
+                      : "Gates Pending Verification"}
+                  </StatusBadge>
+                </div>
+                <p className="text-xs text-braj-cream-700 mt-1">
+                  Demarcated access portals, police pedestrian flow, and crowd routing for {temple.name}.
+                </p>
+              </div>
+
+              <Link href={`/gate-finder?temple=${temple.slug}`}>
+                <Button variant="primary" size="sm" className="text-xs shrink-0 shadow-2xs">
+                  <Compass className="w-3.5 h-3.5 mr-1 text-braj-gold-400" />
+                  <span>Open in Gate Finder</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+            {/* High-Level Arrival Facilities Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 rounded-xl bg-braj-cream-50 border border-braj-cream-200 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-braj-indigo-950">
                   <DoorOpen className="w-4 h-4 text-emerald-600" />
@@ -368,6 +391,111 @@ export default async function TempleDetailPage({ params }: TemplePageProps) {
                 </p>
               </div>
             </div>
+
+            {/* Individual Verified Gate Cards from Database */}
+            {gates.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs text-braj-cream-800 font-medium">
+                  <span className="font-bold text-braj-indigo-950">
+                    Surveyed Gate Access Portals ({gates.length})
+                  </span>
+                  <Link
+                    href={`/gate-finder?temple=${temple.slug}`}
+                    className="text-braj-saffron-600 hover:text-braj-saffron-700 font-semibold flex items-center gap-1"
+                  >
+                    <span>View all on live radar map</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {gates.map((g) => {
+                    const isEntry =
+                      g.gateType === "main_entrance" || g.gateType === "secondary_entrance";
+                    const isExit = g.gateType === "exit_only";
+
+                    return (
+                      <div
+                        key={g.id}
+                        className="p-4 rounded-2xl border border-braj-cream-300 bg-white shadow-2xs hover:border-braj-gold-400 transition-all flex flex-col justify-between space-y-3"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div>
+                              <div className="font-extrabold text-sm text-braj-indigo-950">
+                                {g.gateNumber}
+                              </div>
+                              <div className="font-semibold text-xs text-braj-indigo-900">
+                                {g.gateName}
+                              </div>
+                            </div>
+                            <StatusBadge
+                              variant={
+                                isEntry
+                                  ? "success"
+                                  : isExit
+                                  ? "saffron"
+                                  : "indigo"
+                              }
+                              size="sm"
+                            >
+                              {isEntry
+                                ? "Public Entrance"
+                                : isExit
+                                ? "Exit Only"
+                                : "Restricted"}
+                            </StatusBadge>
+                          </div>
+
+                          <p className="text-[11px] text-braj-cream-800 leading-relaxed line-clamp-2">
+                            {g.bestFor}
+                          </p>
+
+                          {/* Accessibility & Crowd Tags */}
+                          <div className="flex items-center gap-2 flex-wrap text-[10px] pt-1">
+                            {g.accessibility.wheelchairRamp && (
+                              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+                                Wheelchair Ramp
+                              </span>
+                            )}
+                            {g.accessibility.stepFree && (
+                              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+                                Step-Free
+                              </span>
+                            )}
+                            {g.crowdObservation?.available && (
+                              <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-semibold uppercase">
+                                Crowd: {g.crowdObservation.level}
+                                {g.crowdObservation.estimatedWaitMinutes !== undefined &&
+                                  ` (~${g.crowdObservation.estimatedWaitMinutes}m)`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-braj-cream-200 flex items-center justify-between text-xs">
+                          <span className="text-[11px] text-braj-cream-600">
+                            {g.coordinates?.verified ? (
+                              <span className="font-mono text-emerald-800">GPS Verified</span>
+                            ) : (
+                              <span className="italic text-braj-cream-500">GPS Pending</span>
+                            )}
+                          </span>
+
+                          <Link
+                            href={`/gate-finder?temple=${temple.slug}&gate=${g.id}`}
+                            className="inline-flex items-center gap-1 font-semibold text-braj-saffron-600 hover:text-braj-saffron-700 text-xs"
+                          >
+                            <span>Highlight on Map</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Rules & Pilgrim Etiquette */}

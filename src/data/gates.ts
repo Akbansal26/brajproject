@@ -1339,11 +1339,77 @@ export function getAllGateGuides(): TempleGateGuide[] {
 }
 
 export function getGateGuideByTempleId(idOrSlug: string): TempleGateGuide | undefined {
-  return GATE_GUIDES.find(
+  const norm = idOrSlug.trim().toLowerCase();
+
+  // 1. Direct match on templeId or templeSlug
+  const directMatch = GATE_GUIDES.find(
     (g) =>
-      g.templeId.toLowerCase() === idOrSlug.toLowerCase() ||
-      g.templeSlug.toLowerCase() === idOrSlug.toLowerCase()
+      g.templeId.toLowerCase() === norm ||
+      g.templeSlug.toLowerCase() === norm
   );
+  if (directMatch) return directMatch;
+
+  // 2. Canonical slug alias resolution
+  return GATE_GUIDES.find((g) => {
+    const tid = g.templeId.toLowerCase();
+    const tslug = g.templeSlug.toLowerCase();
+
+    // Dwarkadhish Temple (Mathura)
+    if (
+      (norm === "dwarkadhish-temple" ||
+        norm === "dwarkadhish-temple-mathura" ||
+        norm === "dwarkadhish-mathura") &&
+      (tid === "dwarkadhish-mathura" || tslug === "shri-dwarkadhish-temple")
+    ) {
+      return true;
+    }
+
+    // Govardhan Hill / Giriraj Parikrama
+    if (
+      (norm === "govardhan-hill-parikrama" ||
+        norm === "govardhan-hill-giriraj" ||
+        norm === "govardhan-parikrama-gates") &&
+      (tid === "govardhan-hill-giriraj" || tslug === "govardhan-parikrama-gates")
+    ) {
+      return true;
+    }
+
+    // Banke Bihari Temple (Vrindavan)
+    if (
+      (norm === "banke-bihari-temple" || norm === "banke-bihari") &&
+      (tid === "banke-bihari" || tslug === "banke-bihari-temple")
+    ) {
+      return true;
+    }
+
+    // Krishna Janmabhoomi / Janmasthan (Mathura)
+    if (
+      (norm === "shri-krishna-janmabhoomi" ||
+        norm === "krishna-janmasthan" ||
+        norm === "shri-krishna-janmasthan") &&
+      (tid === "krishna-janmasthan" || tslug === "krishna-janmasthan")
+    ) {
+      return true;
+    }
+
+    // Prem Mandir (Vrindavan)
+    if (
+      (norm === "prem-mandir" || norm === "prem-mandir-vrindavan") &&
+      (tid === "prem-mandir" || tslug === "prem-mandir-vrindavan")
+    ) {
+      return true;
+    }
+
+    // ISKCON Vrindavan
+    if (
+      (norm === "iskcon-vrindavan" || norm === "iskcon-temple-vrindavan") &&
+      (tid === "iskcon-vrindavan" || tslug === "iskcon-temple-vrindavan")
+    ) {
+      return true;
+    }
+
+    return false;
+  });
 }
 
 export function getGateSummary(guide: TempleGateGuide) {
