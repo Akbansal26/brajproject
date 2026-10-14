@@ -32,11 +32,17 @@ interface TemplePageProps {
   }>;
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
-  const temples = getAllTemples();
-  return temples.map((temple) => ({
+  const staticSlugs = getAllTemples().map((temple) => ({
     slug: temple.slug,
   }));
+  const dbSlugs = [
+    { slug: "dwarkadhish-temple" },
+    { slug: "govardhan-hill-parikrama" },
+  ];
+  return [...staticSlugs, ...dbSlugs];
 }
 
 export default async function TempleDetailPage({ params }: TemplePageProps) {

@@ -226,12 +226,36 @@ export async function getTempleBySlug(
       };
     }
 
-    const { data, error } = await client
-      .from("temples")
-      .select("*")
-      .or(`slug.eq.${slug},id.eq.${slug}`)
-      .limit(1)
-      .maybeSingle();
+    const cleanSlug = slug.trim().toLowerCase();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanSlug);
+
+    // Build candidates for known slug variations between DB and static catalog
+    const slugCandidates = [cleanSlug];
+    if (
+      cleanSlug === "dwarkadhish-temple" ||
+      cleanSlug === "dwarkadhish-temple-mathura" ||
+      cleanSlug === "dwarkadhish-mathura"
+    ) {
+      slugCandidates.push("dwarkadhish-temple", "dwarkadhish-temple-mathura", "dwarkadhish-mathura");
+    } else if (
+      cleanSlug === "govardhan-hill-parikrama" ||
+      cleanSlug === "govardhan-hill-giriraj"
+    ) {
+      slugCandidates.push("govardhan-hill-parikrama", "govardhan-hill-giriraj");
+    }
+    const uniqueSlugs = Array.from(new Set(slugCandidates));
+
+    let query = client.from("temples").select("*");
+
+    if (isUuid) {
+      query = query.or(`id.eq.${cleanSlug},slug.eq.${cleanSlug}`);
+    } else if (uniqueSlugs.length === 1) {
+      query = query.eq("slug", uniqueSlugs[0]);
+    } else {
+      query = query.in("slug", uniqueSlugs);
+    }
+
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error || !data) {
       const temple = getStaticTempleBySlug(slug);

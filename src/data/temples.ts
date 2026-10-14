@@ -661,7 +661,17 @@ export function getAllTemples(): TempleDetail[] {
 }
 
 export function getTempleBySlug(slug: string): TempleDetail | undefined {
-  return TEMPLES_DATA.find((t) => t.slug === slug || t.id === slug);
+  const normalized = slug.trim().toLowerCase();
+  return TEMPLES_DATA.find(
+    (t) =>
+      t.slug.toLowerCase() === normalized ||
+      t.id.toLowerCase() === normalized ||
+      (normalized === "dwarkadhish-temple" &&
+        (t.slug === "dwarkadhish-temple-mathura" || t.id === "dwarkadhish-mathura")) ||
+      (normalized === "dwarkadhish-temple-mathura" && t.slug === "dwarkadhish-temple") ||
+      (normalized === "govardhan-hill-parikrama" && t.slug === "govardhan-hill-giriraj") ||
+      (normalized === "govardhan-hill-giriraj" && t.slug === "govardhan-hill-parikrama")
+  );
 }
 
 export function getRelatedTemples(currentSlug: string, city: string, limit = 3): TempleDetail[] {
